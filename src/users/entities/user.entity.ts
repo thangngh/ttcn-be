@@ -3,8 +3,9 @@ import { Customer } from "src/customers/entities/customer.entity";
 import { Employee } from "src/employees/entities/employee.entity";
 import { Owner } from "src/owners/entities/owner.entity";
 import { Shipper } from "src/shippers/entities/shipper.entity";
-import { BaseEntity, BeforeInsert, BeforeUpdate, Column, Entity, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { BaseEntity, BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import * as bcrypt from 'bcrypt';
+import { Exclude } from "class-transformer";
 
 @Entity("users")
 export class User extends BaseEntity {
@@ -52,6 +53,7 @@ export class User extends BaseEntity {
 	@Column({
 		name: "pass_word",
 	})
+	@Exclude()
 	passWord!: string;
 
 	@Column({
@@ -108,6 +110,7 @@ export class User extends BaseEntity {
 	employee!: Employee;
 
 	@OneToOne(() => Customer, customer => customer.user)
+	// @JoinColumn()
 	customer!: Customer;
 
 }

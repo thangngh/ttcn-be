@@ -14,6 +14,7 @@ export class Shipper extends BaseEntity {
 	@Column({
 		type: "boolean",
 		default: false,
+		name: "is_ready"
 	})
 	isReady!: boolean;
 
@@ -29,8 +30,15 @@ export class Shipper extends BaseEntity {
 	})
 	rating!: number;
 
+	@Column({
+		name: "user_id"
+	})
+	userId!: string;
+
 	@OneToOne(() => User, (user) => user.shipper)
-	@JoinColumn()
+	@JoinColumn({
+		name: "user_id"
+	})
 	user!: User;
 
 }

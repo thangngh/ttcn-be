@@ -7,6 +7,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/users/entities/user.entity';
+import { CustomersModule } from 'src/customers/customers.module';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { User } from 'src/users/entities/user.entity';
       },
       inject: [ConfigService],
     }),
+    CustomersModule,
+    UsersModule
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],

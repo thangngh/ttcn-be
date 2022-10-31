@@ -15,7 +15,14 @@ export class Customer extends BaseEntity {
 	})
 	role!: UserRole;
 
+	@Column({
+		name: "user_id"
+	})
+	userId?: string;
+
 	@OneToOne(() => User, (user) => user.customer)
-	@JoinColumn()
+	@JoinColumn({
+		name: "user_id"
+	})
 	user!: User;
 }

@@ -15,7 +15,14 @@ export class Owner extends BaseEntity {
 	})
 	role!: UserRole;
 
+	@Column({
+		name: "user_id"
+	})
+	userId!: string;
+
 	@OneToOne(() => User, (user) => user.owner)
-	@JoinColumn()
+	@JoinColumn({
+		name: "user_id"
+	})
 	user!: User;
 }

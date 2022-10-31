@@ -8,6 +8,10 @@ export class OwnersService {
     return 'This action adds a new owner';
   }
 
+  async createEmployee() {
+    return 'This action adds a new employee';
+  }
+
   findAll() {
     return `This action returns all owners`;
   }

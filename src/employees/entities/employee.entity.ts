@@ -13,6 +13,7 @@ export class Employee extends BaseEntity {
 
 	@Column({
 		nullable: true,
+		name: "hour_worked"
 	})
 	hourWorked!: number;
 
@@ -28,6 +29,7 @@ export class Employee extends BaseEntity {
 
 	@Column({
 		nullable: true,
+		name: "time_off"
 	})
 	timeOff!: number;
 
@@ -38,8 +40,15 @@ export class Employee extends BaseEntity {
 	})
 	role!: UserRole;
 
+	@Column({
+		name: "user_id"
+	})
+	userId!: string;
+
 	@OneToOne(() => User, (user) => user.employee)
-	@JoinColumn()
+	@JoinColumn({
+		name: "user_id"
+	})
 	user!: User;
 
 }

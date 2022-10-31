@@ -1,12 +1,15 @@
 import {
-	IsNotEmpty,
 	IsEnum,
+	IsOptional,
 } from 'class-validator';
 import { UserRole } from 'src/common/common.interface';
 
 export class CreateCustomerDto {
 
-	@IsNotEmpty()
+	@IsOptional()
 	@IsEnum(UserRole)
-	role!: string;
+	role?: string;
+
+	@IsOptional()
+	userId?: string;
 }

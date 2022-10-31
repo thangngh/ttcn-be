@@ -40,3 +40,8 @@ export interface IRegister {
 	passWord: string;
 	providerType?: ProviderType;
 }
+
+export interface IAddUser {
+	role?: UserRole;
+	userId: string
+}
