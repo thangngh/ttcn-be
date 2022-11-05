@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILogin, IRegister } from 'src/common/common.interface';
 import { User } from 'src/users/entities/user.entity';
@@ -21,24 +21,27 @@ export class AuthService {
 		const { userName, passWord } = body;
 		const user = await this.userRepository.createQueryBuilder('user')
 			.where('user.user_name = :userName', { userName })
-			.andWhere('user.pass_word = :passWord', { passWord })
 			.getOne();
 
-		// check role
-		console.log("user Login", user);
 
-		this.getRoleUser({ userName, passWord }).then((data) => data);
-
-
-		if (!user) {
-			throw new UnauthorizedException('Invalid credentials');
-		}
-
-		if (!(await user.checkPassword(passWord))) {
+		if (((await user?.checkPassword(passWord)) === false) || !user) {
 			throw new UnauthorizedException(
-				`Wrong password for user with username: ${userName}`,
+				`Wrong password or username`,
 			);
 		}
+
+		const roles = await this.getRoleUser(user?.userName).then((data) => ({
+			// ...data,
+			id: data.id,
+			role: {
+				customer: data.customer?.role || null,
+				owner: data.owner?.role || null,
+				shipper: data.shipper?.role || null,
+				employee: data.employee?.role || null,
+			}
+		}));
+
+		console.log("roles", roles);
 
 		const payload = { id: user.id, userName: user.userName };
 
@@ -50,16 +53,16 @@ export class AuthService {
 
 	}
 
-	async getRoleUser(payload: ILogin) {
-		const { userName, passWord } = payload;
+	async getRoleUser(userName: string) {
 		const builder = this.userRepository.createQueryBuilder("user")
-			.select()
+			.select([
+				"user.id", 'customer.role', 'owner.role', 'shipper.role', 'employee.role'
+			])
 			.leftJoinAndSelect('user.customer', 'customer')
 			.leftJoinAndSelect('user.shipper', 'shipper')
 			.leftJoinAndSelect('user.owner', 'owner')
 			.leftJoinAndSelect('user.employee', 'employee')
 			.where('user.userName = :userName', { userName })
-			.andWhere('user.passWord = :passWord', { passWord })
 			.getOne();
 
 		return builder;
@@ -72,15 +75,15 @@ export class AuthService {
 
 		const userDB = await this.userRepository.createQueryBuilder('user')
 			.where('user.user_name = :userName', { userName: userName })
-			.andWhere('user.email = :email', { email: email })
+			.orWhere('user.email = :email', { email: email })
 			.getOne();
 
-		if (userDB.userName === userName) {
-			throw new UnauthorizedException('Username already exists');
+		if (userDB?.userName === userName) {
+			throw new HttpException(`Username ${userName}  already exists`, HttpStatus.BAD_REQUEST);
 		}
 
-		if (userDB.email === email) {
-			throw new UnauthorizedException('Email already exists');
+		if (userDB?.email === email) {
+			throw new HttpException(`Email ${email}  already exists`, HttpStatus.BAD_REQUEST);
 		}
 
 		const passWordLength = passWord.length;

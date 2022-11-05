@@ -1,34 +1,25 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Body, Patch, Param, Delete, Get } from '@nestjs/common';
+import { UpdateUserDto } from 'src/users/dto/update-user.dto';
 import { CustomersService } from './customers.service';
-import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 @Controller('customer')
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) { }
 
-  @Post()
-  create(@Body() createCustomerDto: CreateCustomerDto) {
-    return this.customersService.create(createCustomerDto);
-  }
 
-  @Get()
-  findAll() {
-    return this.customersService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.customersService.findOne(id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCustomerDto: UpdateCustomerDto) {
+  @Patch('/profile/:id')
+  update(@Param('id') id: string, @Body() updateCustomerDto: UpdateUserDto) {
     return this.customersService.update(id, updateCustomerDto);
   }
 
-  @Delete(':id')
+  @Delete('profile/:id')
   remove(@Param('id') id: string) {
     return this.customersService.remove(id);
+  }
+
+  @Get("/get-all-customers")
+  findAll() {
+    return this.customersService.findAll();
   }
 }

@@ -113,4 +113,8 @@ export class User extends BaseEntity {
 	// @JoinColumn()
 	customer!: Customer;
 
+	constructor(partial: Partial<User>) {
+		super();
+		Object.assign(this, partial);
+	}
 }

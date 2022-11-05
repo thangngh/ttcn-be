@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IAddUser, UserRole } from 'src/common/common.interface';
+import { UpdateUserDto } from 'src/users/dto/update-user.dto';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -13,6 +14,8 @@ export class CustomersService {
   constructor(
     @InjectRepository(Customer)
     private readonly customerRepository: Repository<Customer>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>
   ) { }
   async create(createCustomerDto: CreateCustomerDto) {
     const { role, userId } = createCustomerDto;
@@ -25,31 +28,27 @@ export class CustomersService {
           userId
         }
       ])
-      // .select(['id'])
-      // .from(User, 'user')
       .execute();
   }
 
   findAll() {
     const builder = this.customerRepository.createQueryBuilder("customer")
-      .select(['customer.role'])
+      .select()
       .leftJoinAndSelect("customer.user", "user")
       .getMany();
     return builder;
   }
 
 
-  async findOne(id: string) {
-    const builder = await this.customerRepository.createQueryBuilder("customer")
-      .select(['customer.role'])
-      .leftJoinAndSelect("customer.user", "user")
-      .where("customer.user_id = :id", { id })
-      .getOne();
+  async getProfileUser(id: string) {
+    const builder = await this.userRepository.createQueryBuilder("user")
+      .select()
+      .where("user.id = :id", { id })
 
     return builder;
   }
 
-  update(id: string, updateCustomerDto: UpdateCustomerDto) {
+  update(id: string, updateCustomerDto: UpdateUserDto) {
     return `This action updates a #${id} customer`;
   }
 
