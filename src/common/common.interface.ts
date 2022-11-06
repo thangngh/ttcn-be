@@ -37,7 +37,7 @@ export interface IRegister {
 	fullName: IFullName;
 	email: string;
 	userName: string;
-	passWord: string;
+	passWord?: string;
 	providerType?: ProviderType;
 }
 

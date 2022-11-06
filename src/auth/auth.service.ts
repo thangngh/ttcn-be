@@ -8,6 +8,10 @@ import { JwtPayload } from './interface/jwt-payload.interface';
 import { JwtService } from '@nestjs/jwt';
 import { CustomersService } from 'src/customers/customers.service';
 import * as bcrypt from 'bcrypt';
+import { GoogleDto } from './dto/google-auth.dto';
+import { FacebookDto } from './dto/facebook-auth.dto';
+import { GoogleResponse } from './interface/google-response.interface';
+import jwt_decode from 'jwt-decode';
 @Injectable()
 export class AuthService {
 	constructor(
@@ -41,8 +45,6 @@ export class AuthService {
 			}
 		}));
 
-		console.log("roles", roles);
-
 		const payload = { id: user.id, userName: user.userName };
 
 		return {
@@ -52,6 +54,47 @@ export class AuthService {
 		};
 
 	}
+
+	async loginWithGoogle(body: GoogleDto) {
+		const { accessToken, googleAddress } = body;
+		if (accessToken) {
+			const decoded: GoogleResponse = await jwt_decode(accessToken);
+			console.log(decoded)
+			const user = await this.userRepository.createQueryBuilder('user')
+				.where('user.email = :email', { email: decoded.email })
+				.andWhere('user.provider_type = :providerType', { providerType: ProviderType.GOOGLE })
+				.getOne();
+
+			console.log(user);
+			if (user) {
+				const payload = { id: user.id, userName: user.userName };
+				return {
+					statusCode: HttpStatus.OK,
+					message: 'Login successfully',
+					accessToken: this.jwtService.sign(payload),
+				};
+			} else {
+				const nameSplit = decoded.name?.split(' ');
+				// console.log(nameSplit);
+				await this.createUser({
+					fullName: { firstName: nameSplit[1], lastName: nameSplit[0] },
+					userName: decoded.email,
+					email: decoded.email,
+					providerType: ProviderType.GOOGLE,
+				})
+
+				return {
+					statusCode: HttpStatus.OK,
+					message: 'Login successfully',
+					accessToken: this.jwtService.sign({ userName: decoded.email }),
+				};
+			}
+
+
+		}
+	}
+
+	// async loginWithFacebook(body: FacebookDto) { }
 
 	async getRoleUser(userName: string) {
 		const builder = this.userRepository.createQueryBuilder("user")
@@ -68,14 +111,13 @@ export class AuthService {
 		return builder;
 	}
 
-
-
 	async createUser(body: IRegister) {
 		const { fullName, email, userName, passWord, providerType = ProviderType.USERNAME } = body;
 
 		const userDB = await this.userRepository.createQueryBuilder('user')
 			.where('user.user_name = :userName', { userName: userName })
 			.orWhere('user.email = :email', { email: email })
+			.andWhere('user.provider_type = :providerType', { providerType: providerType })
 			.getOne();
 
 		if (userDB?.userName === userName) {
@@ -86,22 +128,22 @@ export class AuthService {
 			throw new HttpException(`Email ${email}  already exists`, HttpStatus.BAD_REQUEST);
 		}
 
-		const passWordLength = passWord.length;
+		const passWordLength = passWord?.length;
 
-		if (passWordLength <= 8) {
+		if (passWordLength <= 8 && passWord) {
 			throw new UnauthorizedException(
 				`Password must contain at least 8 characters`,
 			);
 		}
 
-		if (!!/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/g.test(passWord) === false) {
+		if ((!!/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/g.test(passWord) === false) && passWord) {
 			throw new UnauthorizedException(
 				`Password must contain at least 1 uppercase, 1 lowercase, 1 number and 1 special character`,
 			);
 		}
 
 		const salt = await bcrypt.genSalt();
-		const hash = await bcrypt.hash(passWord, salt);
+		const hash = passWord ? await bcrypt.hash(passWord, salt) : "unknown password";
 		const user = await this.userRepository.createQueryBuilder('users')
 			.insert()
 			.into(User)
@@ -126,7 +168,6 @@ export class AuthService {
 			content: 'Create user successful'
 		};
 	}
-
 
 	async verifyPayload(payload: JwtPayload): Promise<User> {
 		try {
