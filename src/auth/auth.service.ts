@@ -34,16 +34,6 @@ export class AuthService {
 			);
 		}
 
-		const roles = await this.getRoleUser(user?.userName).then((data) => ({
-			// ...data,
-			id: data.id,
-			role: {
-				customer: data.customer?.role || null,
-				owner: data.owner?.role || null,
-				shipper: data.shipper?.role || null,
-				employee: data.employee?.role || null,
-			}
-		}));
 
 		const payload = { id: user.id, userName: user.userName };
 
@@ -65,7 +55,6 @@ export class AuthService {
 				.andWhere('user.provider_type = :providerType', { providerType: ProviderType.GOOGLE })
 				.getOne();
 
-			console.log(user);
 			if (user) {
 				const payload = { id: user.id, userName: user.userName };
 				return {
@@ -75,7 +64,6 @@ export class AuthService {
 				};
 			} else {
 				const nameSplit = decoded.name?.split(' ');
-				// console.log(nameSplit);
 				await this.createUser({
 					fullName: { firstName: nameSplit[1], lastName: nameSplit[0] },
 					userName: decoded.email,
@@ -97,7 +85,7 @@ export class AuthService {
 	// async loginWithFacebook(body: FacebookDto) { }
 
 	async getRoleUser(userName: string) {
-		const builder = this.userRepository.createQueryBuilder("user")
+		const builder = await this.userRepository.createQueryBuilder("user")
 			.select([
 				"user.id", 'customer.role', 'owner.role', 'shipper.role', 'employee.role'
 			])
@@ -108,7 +96,15 @@ export class AuthService {
 			.where('user.userName = :userName', { userName })
 			.getOne();
 
-		return builder;
+		return {
+			id: builder.id,
+			role: {
+				customer: builder.customer?.role || null,
+				owner: builder.owner?.role || null,
+				shipper: builder.shipper?.role || null,
+				employee: builder.employee?.role || null,
+			}
+		};
 	}
 
 	async createUser(body: IRegister) {

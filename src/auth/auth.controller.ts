@@ -10,7 +10,7 @@ export class AuthController {
 	constructor(public AuthServices: AuthService) { }
 
 	@Post('login')
-	async login(@Body() body: UsersAuthDto) {
+	async login(@Body(new ValidationPipe()) body: UsersAuthDto) {
 		return await this.AuthServices.login(body);
 	}
 
@@ -20,7 +20,14 @@ export class AuthController {
 	}
 
 	@Post('loginWithGoogle')
-	async loginWithGoogle(@Body() body: GoogleDto) {
+	async loginWithGoogle(@Body(new ValidationPipe()) body: GoogleDto) {
 		return await this.AuthServices.loginWithGoogle(body);
 	}
+
+	@UseGuards(JWTAuthGuard)
+	@Get("/profile/get-role")
+	async getRole(@Body(new ValidationPipe()) username: string) {
+		return await this.AuthServices.getRoleUser(username);
+	}
+
 }
