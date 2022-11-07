@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, UseGuards, ValidationPipe } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
+import { FacebookDto } from './dto/facebook-auth.dto';
 import { GoogleDto } from './dto/google-auth.dto';
 import { UsersAuthDto } from './dto/users-auth.dto';
 import { JWTAuthGuard } from './strategy/jwt-auth.guard';
@@ -22,6 +23,11 @@ export class AuthController {
 	@Post('loginWithGoogle')
 	async loginWithGoogle(@Body(new ValidationPipe()) body: GoogleDto) {
 		return await this.AuthServices.loginWithGoogle(body);
+	}
+
+	@Post('loginWithFacebook')
+	async loginWithFacebook(@Body(new ValidationPipe()) body: FacebookDto) {
+		return await this.AuthServices.loginWithFacebook(body);
 	}
 
 	@UseGuards(JWTAuthGuard)

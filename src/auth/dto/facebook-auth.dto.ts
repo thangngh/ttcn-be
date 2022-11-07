@@ -7,4 +7,7 @@ export class FacebookDto {
 
 	@IsOptional()
 	facebookAddress!: string;
+
+	@IsOptional()
+	name!: string;
 }

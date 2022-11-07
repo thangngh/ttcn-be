@@ -82,7 +82,37 @@ export class AuthService {
 		}
 	}
 
-	// async loginWithFacebook(body: FacebookDto) { }
+	async loginWithFacebook(body: FacebookDto) {
+		const { accessToken, facebookAddress, name } = body;
+
+		const user = await this.userRepository.createQueryBuilder('user')
+			.where('user.email = :email', { email: facebookAddress })
+			.andWhere('user.provider_type = :providerType', { providerType: ProviderType.FACEBOOK })
+			.getOne();
+
+		if (user) {
+			const payload = { id: user.id, userName: user.userName };
+			return {
+				statusCode: HttpStatus.OK,
+				message: 'Login successfully',
+				accessToken: this.jwtService.sign(payload),
+			};
+		} else {
+			const nameSplit = name?.split(' ');
+			await this.createUser({
+				fullName: { firstName: nameSplit[0], lastName: nameSplit[1] },
+				userName: facebookAddress,
+				email: facebookAddress,
+				providerType: ProviderType.FACEBOOK,
+			})
+
+			return {
+				statusCode: HttpStatus.OK,
+				message: 'Login successfully',
+				accessToken: this.jwtService.sign({ userName: facebookAddress }),
+			};
+		}
+	}
 
 	async getRoleUser(userName: string) {
 		const builder = await this.userRepository.createQueryBuilder("user")
