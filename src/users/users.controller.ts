@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ValidationPipe } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { JWTAuthGuard } from 'src/auth/strategy/jwt-auth.guard';
+import { GetUserDto } from './dto/get-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -35,5 +37,11 @@ export class UsersController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(+id);
+  }
+
+  // @UseGuards(JWTAuthGuard)
+  @Get('profile/:accessToken')
+  getProfile(@Param(new ValidationPipe()) accessToken: GetUserDto) {
+    return this.usersService.getProfile(accessToken);
   }
 }

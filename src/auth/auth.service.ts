@@ -114,7 +114,7 @@ export class AuthService {
 		}
 	}
 
-	async getRoleUser(userName: string) {
+	async getRoleUser(id: string) {
 		const builder = await this.userRepository.createQueryBuilder("user")
 			.select([
 				"user.id", 'customer.role', 'owner.role', 'shipper.role', 'employee.role'
@@ -123,16 +123,16 @@ export class AuthService {
 			.leftJoinAndSelect('user.shipper', 'shipper')
 			.leftJoinAndSelect('user.owner', 'owner')
 			.leftJoinAndSelect('user.employee', 'employee')
-			.where('user.userName = :userName', { userName })
+			.whereInIds(id)
 			.getOne();
 
 		return {
-			id: builder.id,
+			id: builder?.id,
 			role: {
-				customer: builder.customer?.role || null,
-				owner: builder.owner?.role || null,
-				shipper: builder.shipper?.role || null,
-				employee: builder.employee?.role || null,
+				customer: builder?.customer?.role || null,
+				owner: builder?.owner?.role || null,
+				shipper: builder?.shipper?.role || null,
+				employee: builder?.employee?.role || null,
 			}
 		};
 	}
@@ -204,7 +204,7 @@ export class AuthService {
 			return builder;
 		} catch (error) {
 			throw new UnauthorizedException(`
-				Unauthorized access with payload: ${JSON.stringify(payload.useName)}
+				Unauthorized access with payload: ${JSON.stringify(payload.userName)}
 			`)
 		}
 
