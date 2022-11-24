@@ -1,7 +1,6 @@
 export enum UserRole {
 	USER = "USER",
-	EMPLOYEE = "EMPLOYEE",
-	ADMIN = "ADMIN",
+	SHOPPER = "SHOPPER",
 	ROOT = "ROOT",
 }
 
@@ -29,15 +28,15 @@ export interface IAddress {
 }
 
 export interface ILogin {
-	userName: string;
-	passWord: string;
+	username: string;
+	password: string;
 }
 
 export interface IRegister {
 	fullName: IFullName;
 	email: string;
-	userName: string;
-	passWord?: string;
+	username: string;
+	password?: string;
 	providerType?: ProviderType;
 }
 

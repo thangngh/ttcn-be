@@ -1,6 +1,6 @@
 export interface JwtPayload {
 	id: number;
-	userName: string;
+	username: string;
 	sub: string;
 	iat: number;
 	exp: number;

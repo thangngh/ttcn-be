@@ -1,10 +1,10 @@
 import { Body, Controller, Get, Param, Post, UseGuards, ValidationPipe } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
-import { FacebookDto } from './dto/facebook-auth.dto';
+// import { FacebookDto } from './dto/facebook-auth.dto';
 import { GoogleDto } from './dto/google-auth.dto';
 import { UsersAuthDto } from './dto/users-auth.dto';
-import { JWTAuthGuard } from './strategy/jwt-auth.guard';
+// import { JWTAuthGuard } from './strategy/jwt-auth.guard';
 @Controller('auth')
 export class AuthController {
 
@@ -25,15 +25,9 @@ export class AuthController {
 		return await this.AuthServices.loginWithGoogle(body);
 	}
 
-	@Post('loginWithFacebook')
-	async loginWithFacebook(@Body(new ValidationPipe()) body: FacebookDto) {
-		return await this.AuthServices.loginWithFacebook(body);
-	}
-
-	@UseGuards(JWTAuthGuard)
-	@Get("/profile/get-role/:id")
-	async getRole(@Param(new ValidationPipe()) id: string) {
-		return await this.AuthServices.getRoleUser(id);
-	}
+	// @Post('loginWithFacebook')
+	// async loginWithFacebook(@Body(new ValidationPipe()) body: FacebookDto) {
+	// 	return await this.AuthServices.loginWithFacebook(body);
+	// }
 
 }

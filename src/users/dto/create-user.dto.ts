@@ -15,18 +15,18 @@ export class CreateUserDto {
 	@IsNotEmpty()
 	fullName!: IFullName;
 
-	@IsNotEmpty()
+	@IsOptional()
 	@IsEnum(ISex)
-	sex!: ISex;
+	gender?: ISex;
 
-	@IsNotEmpty()
-	address!: IAddress;
+	@IsOptional()
+	address?: IAddress;
 
-	@IsNotEmpty()
+	@IsOptional()
 	@IsString()
 	@MinLength(6)
 	@MaxLength(20)
-	phone!: string;
+	phone?: string;
 
 	@IsNotEmpty()
 	@IsString()
@@ -37,7 +37,7 @@ export class CreateUserDto {
 	@IsString()
 	@MinLength(6)
 	@MaxLength(20)
-	userName!: string;
+	username!: string;
 
 	@IsNotEmpty()
 	@IsString()
@@ -47,11 +47,11 @@ export class CreateUserDto {
 
 	@IsOptional()
 	@IsString()
-	securityCode!: string;
+	securityCode?: string;
 
 	@IsOptional()
-	avatarPath!: string;
+	avatarPath?: string;
 
 	@IsOptional()
-	avatarThumbnailPath!: string;
+	avatarThumbnailPath?: string;
 }

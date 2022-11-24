@@ -1,33 +1,28 @@
 import { IAddress, IFullName, ISex, ProviderType } from "src/common/common.interface";
-import { Customer } from "src/customers/entities/customer.entity";
-import { Employee } from "src/employees/entities/employee.entity";
-import { Owner } from "src/owners/entities/owner.entity";
-import { Shipper } from "src/shippers/entities/shipper.entity";
-import { BaseEntity, BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import * as bcrypt from 'bcrypt';
 import { Exclude } from "class-transformer";
+import { CommonEntity } from "src/common/entites/common.entity";
+import { Customer } from "src/customer/entities/customer.entity";
+import { Shopper } from "src/shopper/entities/shopper.entity";
 
 @Entity("users")
-export class User extends BaseEntity {
-
-	@PrimaryGeneratedColumn("uuid")
-	id!: string;
+export class User extends CommonEntity {
 
 	@Column({
 		type: "json",
 		nullable: false,
-		name: "full_name",
 	})
 	fullName!: IFullName;
 
 	@Column({
 		type: "enum",
 		enum: ISex,
+		default: null
 	})
-	sex!: ISex;
+	gender?: ISex;
 
 	@Column({
-		name: "provider_type",
 		type: "enum",
 		enum: ProviderType,
 		default: ProviderType.USERNAME,
@@ -37,82 +32,49 @@ export class User extends BaseEntity {
 	@Column({
 		type: "json",
 	})
-	address!: IAddress;
+	address?: IAddress;
 
 	@Column()
-	phone!: string;
+	phone?: string;
 
 	@Column()
-	email!: string;
+	email?: string;
 
-	@Column({
-		name: "user_name",
-	})
-	userName!: string;
+	@Column()
+	username!: string;
 
-	@Column({
-		name: "pass_word",
-		nullable: true,
-	})
-	@Exclude()
-	passWord!: string;
+	@Column()
+	password!: string;
 
-	@Column({
-		nullable: true,
-		name: "security_code"
-	})
-	securityCode!: string;
+	@Column()
+	securityCode?: string;
 
-	@Column({
-		nullable: true,
-		name: "avatar_path"
-	})
-	avatarPath!: string;
+	@Column()
+	avatarPath?: string;
 
-	@Column({
-		nullable: true,
-		name: "avatar_thumbnail_path"
-	})
-	avatarThumbnailPath!: string;
+	@Column()
+	avatarThumbnailPath?: string;
 
-	@Column({
-		type: "timestamp",
-		name: "created_at",
-		default: () => "CURRENT_TIMESTAMP",
-	})
-	createdAt!: Date;
+	@OneToOne(() => Customer, customer => customer.user)
+	customer!: Customer;
 
-	@Column({
-		type: "timestamp",
-		name: "updated_at",
-	})
-	updatedAt!: Date;
+	@OneToOne(() => Shopper, shopper => shopper.user)
+	shopper!: Shopper;
 
 	@BeforeInsert()
 	@BeforeUpdate()
 	async hashPassword(): Promise<void> {
 		const salt = await bcrypt.genSalt();
-		if (this.passWord && !/^\$2a\$\d+\$/.test(this.passWord)) {
-			this.passWord = await bcrypt.hash(this.passWord, salt);
+		if (this.password && !/^\$2a\$\d+\$/.test(this.password)) {
+			this.password = await bcrypt.hash(this.password, salt);
 		}
 	}
 
 	async checkPassword(plainPassword: string): Promise<boolean> {
-		return await bcrypt.compare(plainPassword, this.passWord);
+		return await bcrypt.compare(plainPassword, this.password);
 	}
 
-	@OneToOne(() => Owner, owner => owner.user)
-	owner!: Owner;
 
-	@OneToOne(() => Shipper, shipper => shipper.user)
-	shipper!: Shipper;
-
-	@OneToOne(() => Employee, employee => employee.user)
-	employee!: Employee;
-
-	@OneToOne(() => Customer, customer => customer.user)
-	// @JoinColumn()
-	customer!: Customer;
 
 	constructor(partial: Partial<User>) {
 		super();

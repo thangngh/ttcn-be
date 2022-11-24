@@ -1,3 +1,4 @@
+import { UserRole } from "src/common/common.interface";
 import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity("admin")
@@ -11,4 +12,10 @@ export class Admin extends BaseEntity {
 
 	@Column()
 	password: string;
+
+	@Column({
+		type: "enum",
+		enum: UserRole,
+	})
+	role: UserRole.ROOT;
 }

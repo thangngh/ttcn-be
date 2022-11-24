@@ -10,10 +10,10 @@ export class AuthCredentialsDto implements IRegister {
     readonly email: string;
 
     @IsOptional()
-    readonly userName: string;
+    readonly username: string;
 
     @IsOptional()
-    readonly passWord: string;
+    readonly password: string;
 
     @IsOptional()
     readonly providerType?: ProviderType;

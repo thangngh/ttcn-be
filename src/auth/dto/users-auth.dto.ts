@@ -4,9 +4,9 @@ export class UsersAuthDto {
 
 	@IsString()
 	@IsNotEmpty()
-	userName: string;
+	username: string;
 
 	@IsString()
 	@IsNotEmpty()
-	passWord: string;
+	password: string;
 }

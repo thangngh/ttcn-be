@@ -4,12 +4,14 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { UsersModule } from './users/users.module';
-import { CustomersModule } from './customers/customers.module';
-import { OwnersModule } from './owners/owners.module';
 import { AdminModule } from './admin/admin.module';
-import { EmployeesModule } from './employees/employees.module';
-import { ShippersModule } from './shippers/shippers.module';
 import { AuthModule } from './auth/auth.module';
+import { CustomerModule } from './customer/customer.module';
+import { ShopperModule } from './shopper/shopper.module';
+import { UsersessionhistoryModule } from './usersessionhistory/usersessionhistory.module';
+import { ProductModule } from './product/product.module';
+import { CategoryModule } from './category/category.module';
+import { ProductCategoryModule } from './product-category/product-category.module';
 
 
 @Module({
@@ -19,12 +21,14 @@ import { AuthModule } from './auth/auth.module';
     }),
     DatabaseModule,
     UsersModule,
-    CustomersModule,
-    OwnersModule,
+    CustomerModule,
     AdminModule,
-    EmployeesModule,
-    ShippersModule,
     AuthModule,
+    ShopperModule,
+    UsersessionhistoryModule,
+    ProductModule,
+    CategoryModule,
+    ProductCategoryModule,
 
   ],
   controllers: [AppController],

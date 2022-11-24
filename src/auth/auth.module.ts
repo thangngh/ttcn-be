@@ -7,13 +7,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/users/entities/user.entity';
-import { CustomersModule } from 'src/customers/customers.module';
 import { UsersModule } from 'src/users/users.module';
+import { Customer } from 'src/customer/entities/customer.entity';
+import { Shopper } from 'src/shopper/entities/shopper.entity';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, Customer, Shopper]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
@@ -30,7 +31,6 @@ import { UsersModule } from 'src/users/users.module';
       },
       inject: [ConfigService],
     }),
-    CustomersModule,
     UsersModule
   ],
   providers: [AuthService, JwtStrategy],

@@ -6,40 +6,44 @@ import { Repository } from 'typeorm';
 import { ProviderType } from 'src/common/common.interface';
 import { JwtPayload } from './interface/jwt-payload.interface';
 import { JwtService } from '@nestjs/jwt';
-import { CustomersService } from 'src/customers/customers.service';
-import * as bcrypt from 'bcrypt';
 import { GoogleDto } from './dto/google-auth.dto';
-import { FacebookDto } from './dto/facebook-auth.dto';
+// import { FacebookDto } from './dto/facebook-auth.dto';
 import { GoogleResponse } from './interface/google-response.interface';
 import jwt_decode from 'jwt-decode';
+import { Customer } from 'src/customer/entities/customer.entity';
 @Injectable()
 export class AuthService {
 	constructor(
 		@InjectRepository(User)
 		public userRepository: Repository<User>,
 		public jwtService: JwtService,
-		public customerService: CustomersService,
+		@InjectRepository(Customer)
+		public customerRepository: Repository<Customer>,
 	) { }
 
 	async login(body: ILogin) {
-		const { userName, passWord } = body;
-		const user = await this.userRepository.createQueryBuilder('user')
-			.where('user.user_name = :userName', { userName })
-			.getOne();
+		const { username, password } = body;
+		const user = await this.userRepository.findOne({
+			where: {
+				username
+			},
+			relations: ['customer', 'shopper']
 
+		});
 
-		if (((await user?.checkPassword(passWord)) === false) || !user) {
-			throw new UnauthorizedException(
-				`Wrong password or username`,
-			);
+		const isMatch = await user.checkPassword(password as string);
+
+		if (!isMatch || !user) {
+			throw new HttpException('Wrong username or password', 401);
 		}
 
 
-		const payload = { id: user.id, userName: user.userName };
+		const payload = { id: user.id, username: user.username };
 
 		return {
 			statusCode: HttpStatus.OK,
 			message: 'Login successfully',
+			data: user,
 			accessToken: this.jwtService.sign(payload),
 		};
 
@@ -48,25 +52,27 @@ export class AuthService {
 	async loginWithGoogle(body: GoogleDto) {
 		const { accessToken, googleAddress } = body;
 		if (accessToken) {
+
 			const decoded: GoogleResponse = await jwt_decode(accessToken);
-			console.log(decoded)
+
 			const user = await this.userRepository.createQueryBuilder('user')
 				.where('user.email = :email', { email: decoded.email })
-				.andWhere('user.provider_type = :providerType', { providerType: ProviderType.GOOGLE })
+				.andWhere('user.providerType = :providerType', { providerType: ProviderType.GOOGLE })
 				.getOne();
 
 			if (user) {
-				const payload = { id: user.id, userName: user.userName };
+				const payload = { id: user.id, username: user.username };
 				return {
 					statusCode: HttpStatus.OK,
 					message: 'Login successfully',
 					accessToken: this.jwtService.sign(payload),
 				};
-			} else {
+			}
+			else {
 				const nameSplit = decoded.name?.split(' ');
 				await this.createUser({
 					fullName: { firstName: nameSplit[1], lastName: nameSplit[0] },
-					userName: decoded.email,
+					username: decoded.email,
 					email: decoded.email,
 					providerType: ProviderType.GOOGLE,
 				})
@@ -82,113 +88,86 @@ export class AuthService {
 		}
 	}
 
-	async loginWithFacebook(body: FacebookDto) {
-		const { accessToken, facebookAddress, name } = body;
+	// async loginWithFacebook(body: FacebookDto) {
+	// 	const { accessToken, facebookAddress, name } = body;
 
-		const user = await this.userRepository.createQueryBuilder('user')
-			.where('user.email = :email', { email: facebookAddress })
-			.andWhere('user.provider_type = :providerType', { providerType: ProviderType.FACEBOOK })
-			.getOne();
+	// 	const user = await this.userRepository.createQueryBuilder('user')
+	// 		.where('user.email = :email', { email: facebookAddress })
+	// 		.andWhere('user.provider_type = :providerType', { providerType: ProviderType.FACEBOOK })
+	// 		.getOne();
 
-		if (user) {
-			const payload = { id: user.id, userName: user.userName };
-			return {
-				statusCode: HttpStatus.OK,
-				message: 'Login successfully',
-				accessToken: this.jwtService.sign(payload),
-			};
-		} else {
-			const nameSplit = name?.split(' ');
-			await this.createUser({
-				fullName: { firstName: nameSplit[0], lastName: nameSplit[1] },
-				userName: facebookAddress,
-				email: facebookAddress,
-				providerType: ProviderType.FACEBOOK,
-			})
+	// 	if (user) {
+	// 		const payload = { id: user.id, userName: user.userName };
+	// 		return {
+	// 			statusCode: HttpStatus.OK,
+	// 			message: 'Login successfully',
+	// 			accessToken: this.jwtService.sign(payload),
+	// 		};
+	// 	} else {
+	// 		const nameSplit = name?.split(' ');
+	// 		await this.createUser({
+	// 			fullName: { firstName: nameSplit[0], lastName: nameSplit[1] },
+	// 			userName: facebookAddress,
+	// 			email: facebookAddress,
+	// 			providerType: ProviderType.FACEBOOK,
+	// 		})
 
-			return {
-				statusCode: HttpStatus.OK,
-				message: 'Login successfully',
-				accessToken: this.jwtService.sign({ userName: facebookAddress }),
-			};
-		}
-	}
-
-	async getRoleUser(id: string) {
-		const builder = await this.userRepository.createQueryBuilder("user")
-			.select([
-				"user.id", 'customer.role', 'owner.role', 'shipper.role', 'employee.role'
-			])
-			.leftJoinAndSelect('user.customer', 'customer')
-			.leftJoinAndSelect('user.shipper', 'shipper')
-			.leftJoinAndSelect('user.owner', 'owner')
-			.leftJoinAndSelect('user.employee', 'employee')
-			.whereInIds(id)
-			.getOne();
-
-		return {
-			id: builder?.id,
-			role: {
-				customer: builder?.customer?.role || null,
-				owner: builder?.owner?.role || null,
-				shipper: builder?.shipper?.role || null,
-				employee: builder?.employee?.role || null,
-			}
-		};
-	}
+	// 		return {
+	// 			statusCode: HttpStatus.OK,
+	// 			message: 'Login successfully',
+	// 			accessToken: this.jwtService.sign({ userName: facebookAddress }),
+	// 		};
+	// 	}
+	// }
 
 	async createUser(body: IRegister) {
-		const { fullName, email, userName, passWord, providerType = ProviderType.USERNAME } = body;
+		const { fullName, email, username, password, providerType = ProviderType.USERNAME } = body;
 
 		const userDB = await this.userRepository.createQueryBuilder('user')
-			.where('user.user_name = :userName', { userName: userName })
+			.where('user.username = :username', { username: username })
 			.orWhere('user.email = :email', { email: email })
-			.andWhere('user.provider_type = :providerType', { providerType: providerType })
+			.andWhere('user.providerType = :providerType', { providerType: providerType })
 			.getOne();
 
-		if (userDB?.userName === userName) {
-			throw new HttpException(`Username ${userName}  already exists`, HttpStatus.BAD_REQUEST);
+		if (userDB?.username === username) {
+			throw new HttpException(`Username ${username}  already exists`, HttpStatus.BAD_REQUEST);
 		}
 
 		if (userDB?.email === email) {
 			throw new HttpException(`Email ${email}  already exists`, HttpStatus.BAD_REQUEST);
 		}
 
-		const passWordLength = passWord?.length;
+		const passwordLength = password?.length;
 
-		if (passWordLength <= 8 && passWord) {
+		if (passwordLength <= 8 && password) {
 			throw new UnauthorizedException(
 				`Password must contain at least 8 characters`,
 			);
 		}
 
-		if ((!!/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/g.test(passWord) === false) && passWord) {
+		if ((!!/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/g.test(password) === false) && password) {
 			throw new UnauthorizedException(
 				`Password must contain at least 1 uppercase, 1 lowercase, 1 number and 1 special character`,
 			);
 		}
+		const passwordExits = password ? password : "unknown password";
 
-		const salt = await bcrypt.genSalt();
-		const hash = passWord ? await bcrypt.hash(passWord, salt) : "unknown password";
+		const userDTO = new User({ fullName, email, username, password: passwordExits, providerType });
+
 		const user = await this.userRepository.createQueryBuilder('users')
 			.insert()
 			.into(User)
-			.values([
-				{
-					fullName,
-					email,
-					userName,
-					passWord: hash,
-					providerType,
-				},
-			])
+			.values(userDTO)
 			.execute();
 		const userId = user.identifiers[0].id
 
 		// add user into customer table
-		await this.customerService.create({ userId });
+		await this.customerRepository.save({
+			userId
+		})
 
 		delete (user.identifiers[0].passWord);
+
 		return {
 			status: HttpStatus.CREATED,
 			content: 'Create user successful'
@@ -204,9 +183,8 @@ export class AuthService {
 			return builder;
 		} catch (error) {
 			throw new UnauthorizedException(`
-				Unauthorized access with payload: ${JSON.stringify(payload.userName)}
+				Unauthorized access with payload: ${JSON.stringify(payload.username)}
 			`)
 		}
-
 	}
 }

@@ -2,62 +2,76 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import jwt_decode from 'jwt-decode';
 import { JwtPayload } from 'src/auth/interface/jwt-payload.interface';
+import { Customer } from 'src/customer/entities/customer.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
-import { GetUserDto } from './dto/get-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
-
+import { Shopper } from 'src/shopper/entities/shopper.entity'
+import { UpdateShopperDto } from 'src/shopper/dto/update-shopper.dto';
+import { UpdateCustomerDto } from 'src/customer/dto/update-customer.dto';
 @Injectable()
 export class UsersService {
 
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Customer)
+    private readonly customerRepository: Repository<Customer>,
+    @InjectRepository(Shopper)
+    private readonly shopperRepository: Repository<Shopper>,
   ) { }
 
-
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  async getProfile(user: User) {
+    const userFind = await this.userRepository.findOne({
+      where: {
+        id: user.id
+      },
+      relations: ['customer', 'shopper']
+    });
+    return userFind;
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async updateProfileCustomer(
+    user: User,
+    updateUserDto: UpdateUserDto,
+    updateCustomerDto: UpdateCustomerDto,
+    updateShopperDto: UpdateShopperDto,
+  ) {
+    const userFind = await this.userRepository.findOne({
+      where: {
+        id: user.id
+      },
+      relations: ['customer', 'shopper']
+    });
+
+    const userUpdate = await this.userRepository.save({
+      ...userFind,
+      ...updateUserDto,
+      updatedAt: new Date()
+    });
+
+    if (user.customer !== null) {
+      const customerUpdate = await this.customerRepository.save({
+        ...user.customer,
+        ...updateCustomerDto,
+        updatedAt: new Date()
+      });
+      return {
+        ...userUpdate,
+        customer: customerUpdate
+      }
+    } else {
+      const shopperUpdate = await this.shopperRepository.save({
+        ...user.shopper,
+        ...updateShopperDto,
+        updatedAt: new Date()
+      });
+      return {
+        ...userUpdate,
+        shopper: shopperUpdate
+      }
+    }
   }
 
-  async getRole(userId: string) {
-    const builder = await this.userRepository.createQueryBuilder("user")
-      .leftJoinAndSelect("user.customer", "customer")
-      .leftJoinAndSelect("user.employee", "employee")
-      .leftJoinAndSelect("user.admin", "admin")
-      .leftJoinAndSelect("user.shipper", "shipper")
-      .where("user.id = :id", { id: userId })
-      .getOne();
-
-    return builder;
-  }
-
-  async getProfile(accessToken: GetUserDto) {
-    const decoded: JwtPayload = await jwt_decode(accessToken.accessToken as string);
-    const { id, userName } = decoded;
-
-    const user = await this.userRepository.createQueryBuilder("user")
-      .where("user.user_name = :userName", { userName })
-      .andWhereInIds(id)
-      .getOne();
-
-    return user;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
-
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
-  }
 }
