@@ -1,33 +1,38 @@
+import { CategoryEntity } from "src/category/entities/category.entity";
 import { CommonEntity } from "src/common/entites/common.entity";
-import { ProductCategory } from "src/product-category/entities/product-category.entity";
-import { Column, Entity, OneToMany } from "typeorm";
+import { ProductShopEntity } from "src/product-shop/entities/product-shop.entity";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from "typeorm";
 
-@Entity()
-export class Product extends CommonEntity {
-
-	@Column()
-	name!: string;
+@Entity("product")
+export class ProductEntity extends CommonEntity {
 
 	@Column()
-	description!: string;
+	name: string;
 
 	@Column()
-	price!: number;
-
-	@Column({
-		type: "jsonb"
-	})
-	images!: string[];
+	description: string;
 
 	@Column()
-	quantity!: number;
+	price: number;
 
-	@OneToMany((type) => ProductCategory, (productCategory) => productCategory.product)
-	productCategories!: ProductCategory[];
+	@Column({ type: 'jsonb', nullable: true })
+	image: string
 
-	constructor(partial: Partial<Product>) {
+	@Column()
+	quantity: number;
+
+	@Column()
+	categoryid: string;
+
+	@OneToMany(type => ProductShopEntity, productshops => productshops.products)
+	productshops: ProductShopEntity[];
+
+	@ManyToOne(() => CategoryEntity, category => category.product)
+	@JoinColumn({ name: "categoryid" })
+	category!: CategoryEntity;
+
+	constructor(partial: Partial<ProductEntity>) {
 		super();
 		Object.assign(this, partial);
 	}
-
 }

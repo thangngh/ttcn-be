@@ -3,15 +3,13 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
-import { UsersModule } from './users/users.module';
-import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
-import { CustomerModule } from './customer/customer.module';
-import { ShopperModule } from './shopper/shopper.module';
-import { UsersessionhistoryModule } from './usersessionhistory/usersessionhistory.module';
+import { UsersModule } from './users/users.module';
+import { RoleModule } from './role/role.module';
 import { ProductModule } from './product/product.module';
 import { CategoryModule } from './category/category.module';
-import { ProductCategoryModule } from './product-category/product-category.module';
+import { ShopModule } from './shop/shop.module';
+import { ProductShopModule } from './product-shop/product-shop.module';
 
 
 @Module({
@@ -20,16 +18,13 @@ import { ProductCategoryModule } from './product-category/product-category.modul
       isGlobal: true
     }),
     DatabaseModule,
-    UsersModule,
-    CustomerModule,
-    AdminModule,
     AuthModule,
-    ShopperModule,
-    UsersessionhistoryModule,
+    UsersModule,
+    RoleModule,
     ProductModule,
     CategoryModule,
-    ProductCategoryModule,
-
+    ShopModule,
+    ProductShopModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,82 +1,90 @@
-import { IAddress, IFullName, ISex, ProviderType } from "src/common/common.interface";
-import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
-import * as bcrypt from 'bcrypt';
-import { Exclude } from "class-transformer";
+import { IAddress, IGender, ProviderType } from "src/common/common.interface";
 import { CommonEntity } from "src/common/entites/common.entity";
-import { Customer } from "src/customer/entities/customer.entity";
-import { Shopper } from "src/shopper/entities/shopper.entity";
+import { RoleEntity } from "src/role/entities/role.entity";
+import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, OneToOne } from "typeorm";
+import * as bcrypt from 'bcrypt';
+import { ShopEntity } from "src/shop/entities/shop.entity";
 
-@Entity("users")
-export class User extends CommonEntity {
+@Entity("user")
+export class UserEntity extends CommonEntity {
+
+	@Column()
+	firstname: string
+
+
+	@Column()
+	lastname: string;
 
 	@Column({
-		type: "json",
-		nullable: false,
+		type: 'enum',
+		enum: IGender,
 	})
-	fullName!: IFullName;
+	gender: IGender;
 
 	@Column({
-		type: "enum",
-		enum: ISex,
-		default: null
-	})
-	gender?: ISex;
-
-	@Column({
-		type: "enum",
+		type: 'enum',
 		enum: ProviderType,
 		default: ProviderType.USERNAME,
 	})
-	providerType!: ProviderType;
+	providertype: ProviderType;
 
 	@Column({
-		type: "json",
+		type: 'jsonb'
 	})
-	address?: IAddress;
+	address: IAddress;
 
 	@Column()
-	phone?: string;
+	phone: string;
 
 	@Column()
-	email?: string;
+	email: string;
 
 	@Column()
-	username!: string;
+	username: string;
 
 	@Column()
-	password!: string;
+	password: string;
 
 	@Column()
-	securityCode?: string;
+	avatar: string;
 
+	@Column({
+		type: 'boolean',
+		default: true
+	})
+	isactive: boolean;
+
+	/*
+		1 => customer
+		2 => shopper
+		3 => admin
+	*/
 	@Column()
-	avatarPath?: string;
-
-	@Column()
-	avatarThumbnailPath?: string;
-
-	@OneToOne(() => Customer, customer => customer.user)
-	customer!: Customer;
-
-	@OneToOne(() => Shopper, shopper => shopper.user)
-	shopper!: Shopper;
+	roleid: string;
 
 	@BeforeInsert()
 	@BeforeUpdate()
-	async hashPassword(): Promise<void> {
+	async hashPassword() {
 		const salt = await bcrypt.genSalt();
-		if (this.password && !/^\$2a\$\d+\$/.test(this.password)) {
-			this.password = await bcrypt.hash(this.password, salt);
-		}
+		this.password = await bcrypt.hash(this.password, salt);
 	}
 
-	async checkPassword(plainPassword: string): Promise<boolean> {
-		return await bcrypt.compare(plainPassword, this.password);
+	async validatePassword(password: string): Promise<boolean> {
+		const isMatch = await bcrypt.compare(password, this.password);
+		return isMatch;
 	}
 
 
+	@OneToOne(type => RoleEntity, role => role.id)
+	@JoinColumn({
+		name: "roleid"
+	})
+	role: RoleEntity;
 
-	constructor(partial: Partial<User>) {
+	@OneToOne(type => ShopEntity, shop => shop.user)
+	shop: ShopEntity;
+
+	constructor(partial: Partial<UserEntity>) {
 		super();
 		Object.assign(this, partial);
 	}

@@ -10,17 +10,17 @@ export class CommonEntity extends BaseEntity {
 		type: "timestamp",
 		default: () => "CURRENT_TIMESTAMP",
 	})
-	createdAt!: Date;
+	createdat!: Date;
 
 	@Column({
 		type: "timestamp",
 		default: null
 	})
-	updatedAt?: Date;
+	updatedat?: Date;
 
-	// @Column({
-	// 	type: "timestamp",
-	// 	default: null
-	// })
-	// deletedAt?: Date;
+	@Column({
+		type: "timestamp",
+		default: null
+	})
+	deletedat?: Date;
 }

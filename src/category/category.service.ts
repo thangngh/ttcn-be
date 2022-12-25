@@ -1,26 +1,113 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ProductEntity } from 'src/product/entities/product.entity';
+import { UserEntity } from 'src/users/entities/user.entity';
+import { Repository } from 'typeorm';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { CategoryEntity } from './entities/category.entity';
 
 @Injectable()
 export class CategoryService {
-  create(createCategoryDto: CreateCategoryDto) {
-    return 'This action adds a new category';
+
+  constructor(
+    @InjectRepository(CategoryEntity)
+    private readonly categoryRepository: Repository<CategoryEntity>,
+    @InjectRepository(ProductEntity)
+    private readonly productRepository: Repository<ProductEntity>,
+  ) { }
+
+  async createCategory(create: CreateCategoryDto) {
+    const {
+      name,
+      shopid
+    } = create;
+    const category = new CategoryEntity({ name, shopid });
+    await this.categoryRepository.createQueryBuilder()
+      .insert()
+      .into(CategoryEntity)
+      .values(category)
+      .execute();
+
+    return {
+      status: HttpStatus.CREATED,
+      message: "Category created successfully"
+    }
   }
 
-  findAll() {
-    return `This action returns all category`;
+  async updateCategory(id: string, update: UpdateCategoryDto) {
+    const {
+      name,
+      updateat
+    } = update;
+    const category = new CategoryEntity({ name, updatedat: updateat });
+    await this.categoryRepository.createQueryBuilder()
+      .update(CategoryEntity)
+      .set(category)
+      .where("id = :id", { id })
+      .execute();
+
+    const data = await this.categoryRepository.findOne({
+      where: { id }
+    });
+
+    return {
+      status: HttpStatus.CREATED,
+      message: "Category updated successfully",
+      data: data
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} category`;
+  async deleteCategory(id: string) {
+    await this.categoryRepository.createQueryBuilder()
+      .delete()
+      .from(CategoryEntity)
+      .where("id = :id", { id })
+      .execute();
+
+    return {
+      status: HttpStatus.OK,
+      message: "Category deleted successfully"
+    }
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
+  async getAllCategory() {
+    return await this.categoryRepository.find();
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} category`;
+  async findProductByCategory(name: string) {
+    const category = await this.categoryRepository.findOne({
+      where: { name }
+    });
+
+    if (!category) throw new HttpException("Category not found", HttpStatus.NOT_FOUND);
+
+    const categoryId = category?.id;
+
+    const product = await this.productRepository.find({ where: { categoryid: categoryId } });
+    return {
+      status: HttpStatus.OK,
+      data: product
+    }
+  }
+
+  async getCategoryByShopId(shopid: string) {
+    const categories = await this.categoryRepository.find({
+      where: { shopid }
+    });
+    return {
+      status: HttpStatus.OK,
+      categories
+    }
+  }
+
+  async findCategoryById(id: string) {
+    const category = await this.categoryRepository.findOne({
+      where: { id }
+    });
+    return {
+      status: HttpStatus.OK,
+      category
+    }
   }
 }

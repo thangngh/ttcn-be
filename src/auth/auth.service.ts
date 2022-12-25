@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILogin, IRegister } from 'src/common/common.interface';
-import { User } from 'src/users/entities/user.entity';
+import { enumRole, ILogin, IRegister } from 'src/common/common.interface';
+import { UserEntity } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { ProviderType } from 'src/common/common.interface';
 import { JwtPayload } from './interface/jwt-payload.interface';
@@ -10,15 +10,12 @@ import { GoogleDto } from './dto/google-auth.dto';
 // import { FacebookDto } from './dto/facebook-auth.dto';
 import { GoogleResponse } from './interface/google-response.interface';
 import jwt_decode from 'jwt-decode';
-import { Customer } from 'src/customer/entities/customer.entity';
 @Injectable()
 export class AuthService {
 	constructor(
-		@InjectRepository(User)
-		public userRepository: Repository<User>,
-		public jwtService: JwtService,
-		@InjectRepository(Customer)
-		public customerRepository: Repository<Customer>,
+		@InjectRepository(UserEntity)
+		public userRepository: Repository<UserEntity>,
+		public jwtService: JwtService
 	) { }
 
 	async login(body: ILogin) {
@@ -26,12 +23,10 @@ export class AuthService {
 		const user = await this.userRepository.findOne({
 			where: {
 				username
-			},
-			relations: ['customer', 'shopper']
-
+			}
 		});
 
-		const isMatch = await user.checkPassword(password as string);
+		const isMatch = await user.validatePassword(password as string);
 
 		if (!isMatch || !user) {
 			throw new HttpException('Wrong username or password', 401);
@@ -43,7 +38,6 @@ export class AuthService {
 		return {
 			statusCode: HttpStatus.OK,
 			message: 'Login successfully',
-			data: user,
 			accessToken: this.jwtService.sign(payload),
 		};
 
@@ -57,7 +51,7 @@ export class AuthService {
 
 			const user = await this.userRepository.createQueryBuilder('user')
 				.where('user.email = :email', { email: decoded.email })
-				.andWhere('user.providerType = :providerType', { providerType: ProviderType.GOOGLE })
+				.andWhere('user.providertype = :providertype', { providertype: ProviderType.GOOGLE })
 				.getOne();
 
 			if (user) {
@@ -71,10 +65,11 @@ export class AuthService {
 			else {
 				const nameSplit = decoded.name?.split(' ');
 				await this.createUser({
-					fullName: { firstName: nameSplit[1], lastName: nameSplit[0] },
+					firstname: nameSplit[1],
+					lastname: nameSplit[0],
 					username: decoded.email,
 					email: decoded.email,
-					providerType: ProviderType.GOOGLE,
+					providertype: ProviderType.GOOGLE,
 				})
 
 				return {
@@ -121,12 +116,21 @@ export class AuthService {
 	// }
 
 	async createUser(body: IRegister) {
-		const { fullName, email, username, password, providerType = ProviderType.USERNAME } = body;
+		const {
+			firstname,
+			lastname,
+			email,
+			username,
+			password,
+			providertype = ProviderType.USERNAME,
+			role = enumRole.CUSTOMER,
+			isactive = true,
+		} = body;
 
 		const userDB = await this.userRepository.createQueryBuilder('user')
 			.where('user.username = :username', { username: username })
 			.orWhere('user.email = :email', { email: email })
-			.andWhere('user.providerType = :providerType', { providerType: providerType })
+			.andWhere('user.providertype = :providertype', { providertype: providertype })
 			.getOne();
 
 		if (userDB?.username === username) {
@@ -152,21 +156,22 @@ export class AuthService {
 		}
 		const passwordExits = password ? password : "unknown password";
 
-		const userDTO = new User({ fullName, email, username, password: passwordExits, providerType });
+		const userDTO = new UserEntity({
+			firstname,
+			lastname,
+			email,
+			username,
+			password: passwordExits,
+			providertype,
+			roleid: role,
+			isactive
+		});
 
-		const user = await this.userRepository.createQueryBuilder('users')
+		await this.userRepository.createQueryBuilder('users')
 			.insert()
-			.into(User)
+			.into(UserEntity)
 			.values(userDTO)
 			.execute();
-		const userId = user.identifiers[0].id
-
-		// add user into customer table
-		await this.customerRepository.save({
-			userId
-		})
-
-		delete (user.identifiers[0].passWord);
 
 		return {
 			status: HttpStatus.CREATED,
@@ -174,7 +179,7 @@ export class AuthService {
 		};
 	}
 
-	async verifyPayload(payload: JwtPayload): Promise<User> {
+	async verifyPayload(payload: JwtPayload): Promise<UserEntity> {
 		try {
 			const builder = await this.userRepository.createQueryBuilder('user')
 				.where('user.id = :id', { id: payload.id })

@@ -3,7 +3,10 @@ import { IFullName, IRegister, ProviderType } from 'src/common/common.interface'
 
 export class AuthCredentialsDto implements IRegister {
     @IsOptional()
-    readonly fullName: IFullName;
+    readonly firstname: string;
+
+    @IsOptional()
+    readonly lastname: string;
 
     @IsOptional()
     @IsEmail()

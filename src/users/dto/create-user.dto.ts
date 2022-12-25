@@ -1,57 +1,38 @@
-import {
-	IsString,
-	IsNotEmpty,
-	IsEmail,
-	MinLength,
-	MaxLength,
-	IsEnum,
-	IsOptional
-} from 'class-validator';
-import { IAddress, IFullName, ISex } from 'src/common/common.interface';
-
+import { IsEnum, IsOptional, Matches } from "class-validator";
+import { IAddress, IGender } from "src/common/common.interface";
 
 export class CreateUserDto {
 
-	@IsNotEmpty()
-	fullName!: IFullName;
+	@IsOptional()
+	firstname?: string;
 
 	@IsOptional()
-	@IsEnum(ISex)
-	gender?: ISex;
+	lastname?: string;
+
+	@IsOptional()
+	@IsEnum(IGender)
+	gender?: IGender;
 
 	@IsOptional()
 	address?: IAddress;
 
 	@IsOptional()
-	@IsString()
-	@MinLength(6)
-	@MaxLength(20)
 	phone?: string;
 
-	@IsNotEmpty()
-	@IsString()
-	@IsEmail()
-	email!: string;
-
-	@IsNotEmpty()
-	@IsString()
-	@MinLength(6)
-	@MaxLength(20)
-	username!: string;
-
-	@IsNotEmpty()
-	@IsString()
-	@MinLength(6)
-	@MaxLength(20)
-	password!: string;
+	@IsOptional()
+	email?: string;
 
 	@IsOptional()
-	@IsString()
-	securityCode?: string;
+	username?: string;
 
 	@IsOptional()
-	avatarPath?: string;
+	@Matches(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/, {
+		message:
+			'Password must includes lowercase, uppercase, number and special character',
+	})
+	password?: string;
 
 	@IsOptional()
-	avatarThumbnailPath?: string;
+	avatar?: string;
+
 }

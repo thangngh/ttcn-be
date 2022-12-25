@@ -1,34 +1,41 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { JWTAuthGuard } from 'src/auth/strategy/jwt-auth.guard';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Controller('category')
 export class CategoryController {
-  constructor(private readonly categoryService: CategoryService) {}
+  constructor(private readonly categoryService: CategoryService) { }
 
-  @Post()
-  create(@Body() createCategoryDto: CreateCategoryDto) {
-    return this.categoryService.create(createCategoryDto);
+
+  @UseGuards(JWTAuthGuard)
+  @Post("create-category")
+  createCategory(@Body() create: CreateCategoryDto) {
+    return this.categoryService.createCategory(create);
   }
 
-  @Get()
-  findAll() {
-    return this.categoryService.findAll();
+  @UseGuards(JWTAuthGuard)
+  @Get("/find-product-categories")
+  findAll(@Query("name") name: string) {
+    return this.categoryService.findProductByCategory(name);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.categoryService.findOne(+id);
+  @UseGuards(JWTAuthGuard)
+  @Get("/category-shop/:shopid")
+  getCategoryByShop(@Param("shopid") shopid: string) {
+    return this.categoryService.getCategoryByShopId(shopid);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
-    return this.categoryService.update(+id, updateCategoryDto);
+  @UseGuards(JWTAuthGuard)
+  @Patch("/update-category/:id")
+  updateCategory(@Param("id") id: string, @Body() update: UpdateCategoryDto) {
+    return this.categoryService.updateCategory(id, update);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.categoryService.remove(+id);
+  @UseGuards(JWTAuthGuard)
+  @Get("/get-all-categories")
+  getAllCategories() {
+    return this.categoryService.getAllCategory();
   }
 }

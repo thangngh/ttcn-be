@@ -5,7 +5,7 @@ import { Strategy, ExtractJwt } from 'passport-jwt';
 
 import { AuthService } from '../auth.service';
 import { JwtPayload } from '../interface/jwt-payload.interface';
-import { User } from 'src/users/entities/user.entity';
+import { UserEntity } from 'src/users/entities/user.entity';
 
 
 @Injectable()
@@ -22,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 		});
 	}
 
-	validate(payload: JwtPayload): Promise<User> {
+	validate(payload: JwtPayload): Promise<UserEntity> {
 		return this.authService.verifyPayload(payload);
 	}
 }
