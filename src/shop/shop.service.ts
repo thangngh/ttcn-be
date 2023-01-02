@@ -56,6 +56,19 @@ export class ShopService {
     }
   }
 
+  async getShopById(id: string) {
+    const shop = await this.shopRepository.findOne({
+      where: { id },
+      // relations: ['user']
+    });
+    if (!shop) {
+      throw new HttpException('Shop not found', HttpStatus.NOT_FOUND);
+    }
+    return {
+      status: HttpStatus.OK,
+      content: shop,
+    }
+  }
   // async upDateShop() { }
 
   // async findAllUserOrder() { }

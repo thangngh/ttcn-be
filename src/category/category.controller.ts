@@ -33,7 +33,7 @@ export class CategoryController {
     return this.categoryService.updateCategory(id, update);
   }
 
-  @UseGuards(JWTAuthGuard)
+  // @UseGuards(JWTAuthGuard)
   @Get("/get-all-categories")
   getAllCategories() {
     return this.categoryService.getAllCategory();

@@ -4,6 +4,7 @@ import { RoleEntity } from "src/role/entities/role.entity";
 import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, OneToOne } from "typeorm";
 import * as bcrypt from 'bcrypt';
 import { ShopEntity } from "src/shop/entities/shop.entity";
+import { UserOrder } from "src/user-order/entities/user-order.entity";
 
 @Entity("user")
 export class UserEntity extends CommonEntity {
@@ -83,6 +84,9 @@ export class UserEntity extends CommonEntity {
 
 	@OneToOne(type => ShopEntity, shop => shop.user)
 	shop: ShopEntity;
+
+	@OneToOne(() => UserOrder, userorder => userorder.user)
+	userorder: UserOrder;
 
 	constructor(partial: Partial<UserEntity>) {
 		super();

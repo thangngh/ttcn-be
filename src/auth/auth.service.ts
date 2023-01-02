@@ -10,12 +10,16 @@ import { GoogleDto } from './dto/google-auth.dto';
 // import { FacebookDto } from './dto/facebook-auth.dto';
 import { GoogleResponse } from './interface/google-response.interface';
 import jwt_decode from 'jwt-decode';
+import { MailerService } from '@nestjs-modules/mailer';
+import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class AuthService {
 	constructor(
 		@InjectRepository(UserEntity)
 		public userRepository: Repository<UserEntity>,
-		public jwtService: JwtService
+		public jwtService: JwtService,
+		private mailerService: MailerService,
+		private configService: ConfigService
 	) { }
 
 	async login(body: ILogin) {
@@ -26,7 +30,7 @@ export class AuthService {
 			}
 		});
 
-		const isMatch = await user.validatePassword(password as string);
+		const isMatch = await user?.validatePassword(password as string);
 
 		if (!isMatch || !user) {
 			throw new HttpException('Wrong username or password', 401);
@@ -44,7 +48,7 @@ export class AuthService {
 	}
 
 	async loginWithGoogle(body: GoogleDto) {
-		const { accessToken, googleAddress } = body;
+		const { accessToken } = body;
 		if (accessToken) {
 
 			const decoded: GoogleResponse = await jwt_decode(accessToken);
@@ -63,12 +67,12 @@ export class AuthService {
 				};
 			}
 			else {
-				const nameSplit = decoded.name?.split(' ');
 				await this.createUser({
-					firstname: nameSplit[1],
-					lastname: nameSplit[0],
+					firstname: decoded.family_name,
+					lastname: decoded.given_name,
 					username: decoded.email,
 					email: decoded.email,
+					avatar: decoded.picture,
 					providertype: ProviderType.GOOGLE,
 				})
 
@@ -155,7 +159,6 @@ export class AuthService {
 			);
 		}
 		const passwordExits = password ? password : "unknown password";
-
 		const userDTO = new UserEntity({
 			firstname,
 			lastname,
@@ -190,6 +193,90 @@ export class AuthService {
 			throw new UnauthorizedException(`
 				Unauthorized access with payload: ${JSON.stringify(payload.username)}
 			`)
+		}
+	}
+
+	async resetPassword(email: string) {
+		const user = await this.userRepository.findOne({
+			where: {
+				email: email
+			}
+		})
+
+		if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+
+		const genToken = await this.jwtService.sign(email, {
+			expiresIn: "300s"
+		})
+
+		this.mailerService.sendMail({
+			to: email,
+			subject: 'Reset your Password',
+			template: 'reset-password',
+			context: {
+				resetLink:
+					this.configService.get('FE_HOST') + `/change-password?token=${genToken}`,
+				contact: 'thanngh.00@gmail.com',
+			}
+		})
+	}
+
+	async changePasswordWithVerifyToken(
+		{
+			token,
+			password
+		}: {
+			token: string,
+			password: string
+		}) {
+		const decoded: any = await jwt_decode(token)
+		const user = await this.userRepository.findOne({
+			where: {
+				email: decoded.email
+			}
+		})
+
+		if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+
+		user.password = password
+
+		await this.userRepository.save(user)
+
+		return {
+			status: HttpStatus.OK,
+			content: 'Change password successful'
+		}
+
+	}
+
+	async changePassword(
+		{
+			oldPassword,
+			newPassword
+		}: {
+			oldPassword: string,
+			newPassword: string
+		},
+		user: UserEntity) {
+		const userDB = await this.userRepository.findOne({
+			where: {
+				id: user.id
+			}
+		})
+
+		if (!userDB) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+
+		const isMatch = await userDB?.validatePassword(oldPassword)
+
+		if (!isMatch) throw new HttpException('Old password is incorrect', HttpStatus.BAD_REQUEST);
+
+		userDB.password = newPassword
+
+		await this.userRepository.save(userDB)
+
+		return {
+			status: HttpStatus.OK,
+			content: 'Change password successful'
 		}
 	}
 }

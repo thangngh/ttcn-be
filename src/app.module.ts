@@ -10,6 +10,10 @@ import { ProductModule } from './product/product.module';
 import { CategoryModule } from './category/category.module';
 import { ShopModule } from './shop/shop.module';
 import { ProductShopModule } from './product-shop/product-shop.module';
+import { UserOrderModule } from './user-order/user-order.module';
+import { PaymentModule } from './payment/payment.module';
+import { UserPaymentModule } from './user-payment/user-payment.module';
+import { EmailModule } from './email/email.module';
 
 
 @Module({
@@ -25,6 +29,10 @@ import { ProductShopModule } from './product-shop/product-shop.module';
     CategoryModule,
     ShopModule,
     ProductShopModule,
+    UserOrderModule,
+    PaymentModule,
+    UserPaymentModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

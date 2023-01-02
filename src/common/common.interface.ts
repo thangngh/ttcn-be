@@ -36,6 +36,7 @@ export interface IRegister {
 	providertype?: ProviderType;
 	role?: enumRole;
 	isactive?: boolean;
+	avatar?: string;
 }
 
 export enum enumRole {

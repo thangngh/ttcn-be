@@ -23,19 +23,49 @@ export class ProductShopService {
       relations: ["products", "shop"]
     });
 
-    const productshop = productshops.map((productshop) => ({
+    const productshop: any[] = productshops.map((productshop) => ({
       productId: productshop.products.id,
       productPrice: productshop.products.price,
       productName: productshop.products.name,
       productDescription: productshop.products.description,
       productImage: productshop.products.image,
+      categoryid: productshop.products.categoryid,
       shopId: productshop.shop.id,
+      quantity: productshop.products.quantity,
       shopName: productshop.shop.name,
     }))
 
+    const categoryId = productshop.map((productshop) => productshop.categoryid);
+
+    const category = []
+
+    for await (const id of categoryId) {
+      const categoryRes = await this.categoryService.findCategoryById(id);
+
+      category.push(categoryRes)
+    }
+    const result = productshop.map((productshop, index) => {
+      const findCategoryId = category.find((category) => category.category.id === productshop.categoryid);
+      if (findCategoryId) {
+        productshop.categoryname =
+          [
+            ...new Set(
+              category.filter((category) => category.category.id === productshop.categoryid).map((category) => category.category.name)
+            )
+          ].join("")
+        // productshop.categoryname = category.reduce((acc, cur) => {
+        //   if (cur.category.id === productshop.categoryid) {
+        //     acc.push(cur.category.name)
+        //   }
+        //   return acc.join("")
+        // }, [])
+
+      }
+      return productshop
+    })
     return {
       status: HttpStatus.OK,
-      data: productshop
+      data: result
     }
   }
 

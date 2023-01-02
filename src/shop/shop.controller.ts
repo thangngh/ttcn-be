@@ -20,4 +20,9 @@ export class ShopController {
   getShopByUser(@AuthUser() user) {
     return this.shopService.getShopByUser(user);
   }
+
+  @Get("/get-shop/:id")
+  getShopById(@Param('id') id: string) {
+    return this.shopService.getShopById(id);
+  }
 }
