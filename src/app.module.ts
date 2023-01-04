@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { ClassSerializerInterceptor, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -14,6 +14,7 @@ import { UserOrderModule } from './user-order/user-order.module';
 import { PaymentModule } from './payment/payment.module';
 import { UserPaymentModule } from './user-payment/user-payment.module';
 import { EmailModule } from './email/email.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 
 
 @Module({
@@ -35,6 +36,12 @@ import { EmailModule } from './email/email.module';
     EmailModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ClassSerializerInterceptor,
+    },
+  ],
 })
 export class AppModule { }

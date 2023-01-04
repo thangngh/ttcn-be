@@ -196,12 +196,14 @@ export class AuthService {
 		}
 	}
 
-	async resetPassword(email: string) {
+	async resetPassword(email: { email: string }) {
+		console.log("email", email)
 		const user = await this.userRepository.findOne({
 			where: {
-				email: email
+				email: email.email
 			}
 		})
+		console.log(user)
 
 		if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
@@ -210,7 +212,7 @@ export class AuthService {
 		})
 
 		this.mailerService.sendMail({
-			to: email,
+			to: email.email,
 			subject: 'Reset your Password',
 			template: 'reset-password',
 			context: {

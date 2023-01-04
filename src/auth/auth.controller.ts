@@ -33,8 +33,8 @@ export class AuthController {
 	// }
 
 	@Post("/reset-password")
-	async resetPassword(@Body(new ValidationPipe()) body: string) {
-		return await this.AuthServices.resetPassword(body);
+	async resetPassword(@Body(new ValidationPipe()) email: { email: string }) {
+		return await this.AuthServices.resetPassword(email);
 	}
 
 	@Patch("/change-password-with-verify-token")
